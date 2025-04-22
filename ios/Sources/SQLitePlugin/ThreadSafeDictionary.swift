@@ -72,4 +72,9 @@ class ThreadSafeDictionary<V: Hashable,T>: Collection {
         }
     }
 
+    func snapshot() -> [V: T] {
+        self.concurrentQueue.sync {
+            return self.dictionary
+        }
+    }
 }
