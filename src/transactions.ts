@@ -72,7 +72,7 @@ export class SQLitePluginTransaction {
     }
 
     if (this.readOnly && /^(\s|;)*(?:alter|create|delete|drop|insert|reindex|replace|update)/i.test(sql)) {
-      this.handleStatementFailure(error, {
+      this.handleStatementFailure(error || null, {
         message: 'invalid sql for a read-only transaction',
       });
       return;

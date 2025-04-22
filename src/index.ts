@@ -1,7 +1,8 @@
 import { registerPlugin } from '@capacitor/core';
+
 import { DB_STATE_INIT, DB_STATE_OPEN, txLocks } from './constants';
-import { newSQLError, nextTick } from './utils';
 import { SQLitePluginTransaction } from './transactions';
+import { newSQLError, nextTick } from './utils';
 
 interface SQLiteBridgePlugin {
   open(options: { dbName: string; location: string }): Promise<void>;
@@ -98,11 +99,7 @@ class SQLite {
     }
   }
 
-  transaction(
-    fn: (tx: SQLitePluginTransaction) => void,
-    error: ((arg0: Error) => void) | null,
-    success: (() => void) | null,
-  ) {
+  transaction(fn: (tx: SQLitePluginTransaction) => void, error: (arg0: Error) => void, success: (() => void) | null) {
     if (!this.openDBs[this.dbname]) {
       error(newSQLError('database not open'));
       return;
@@ -115,14 +112,14 @@ class SQLite {
     error: ((arg0: Error) => void) | null,
     success: (() => void) | null,
   ) {
-    if (!this.openDBs[this.dbname]) {
+    if (!this.openDBs[this.dbname] && error) {
       error(newSQLError('database not open'));
       return;
     }
     this.addTransaction(new SQLitePluginTransaction(this, fn, error, success, false, true));
   }
 
-  startNextTransaction() {
+  startNextTransaction(): void {
     nextTick(
       ((_this) => {
         return () => {
@@ -136,7 +133,8 @@ class SQLite {
             return;
           } else if (txLock.queue.length > 0 && !txLock.inProgress) {
             txLock.inProgress = true;
-            txLock.queue.shift().start();
+            const next = txLock.queue.shift();
+            if (next) next.start();
           }
         };
       })(this),
