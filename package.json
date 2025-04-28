@@ -1,6 +1,6 @@
 {
   "name": "capacitor-sqlite-storage",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "SQLite Plugin for Capacitor, based on cordova-sqlite-storage",
   "main": "dist/plugin.cjs.js",
   "module": "dist/esm/index.js",

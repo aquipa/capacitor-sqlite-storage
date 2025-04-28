@@ -3,9 +3,8 @@ import Foundation
 import SQLite3
 
 public class SQLite {
-    var openDBs: [String: OpaquePointer] = [:]
-    private var dbHandles = ThreadSafeDictionary<String, OpaquePointer?>()
-    public var appDBPaths: [String: String] = [:]
+    var openDBs = ThreadSafeDictionary<String, OpaquePointer?>()
+    public var appDBPaths = NSMutableDictionary()
 
     public init() {
         let fm = FileManager.default
@@ -111,7 +110,7 @@ public class SQLite {
             return nil
         }
 
-        return (dbDir as NSString).appendingPathComponent(dbFile)
+        return (dbDir as! NSString).appendingPathComponent(dbFile)
     }
 
     public func close(call: CAPPluginCall, dbName: String) {
@@ -182,20 +181,20 @@ public class SQLite {
     }
 
     public func isDatabaseOpen(dbName: String) -> Bool {
-        return dbHandles[dbName] != nil
+        return openDBs[dbName] != nil
     }
 
     public func closeAll() {
-        for (_, db) in dbHandles.snapshot() {
+        for (_, db) in openDBs.snapshot() {
             if let db = db {
                 sqlite3_close(db)
             }
         }
-        dbHandles.removeAll()
+        openDBs.removeAll()
     }
 
     public func executeSqlBatch(dbName: String, batch: [String]) throws -> [[String: Any]] {
-        guard let db = dbHandles[dbName] else {
+        guard let db = openDBs[dbName] else {
             throw SQLiteError("Database not open: \(dbName)")
         }
 
@@ -258,7 +257,7 @@ public class SQLite {
         guard let base = appDBPaths[location] else {
             throw SQLiteError("Invalid database location: \(location)")
         }
-        return (base as NSString).appendingPathComponent(dbName)
+        return (base as! NSString).appendingPathComponent(dbName)
     }
 
     private func captureError(from db: OpaquePointer?) -> SQLiteError {
@@ -413,7 +412,7 @@ public class SQLite {
         sqlite3_finalize(statement)
 
         if error != nil {
-            return errorResult(from: db)
+            return errorResult(from: db!)
         }
 
         resultSet["rows"] = resultRows
